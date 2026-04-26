@@ -130,7 +130,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Автор
 
-- `maxlight24`
+- `maxlight24` aka `Platon0x18`
 - `encapsulation404@gmail.com`
 - разработано с использованием `GPT-5.4`
 
