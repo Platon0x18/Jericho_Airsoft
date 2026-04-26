@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fallout-inspired HUD palette -->
+    <color name="hud_bg_950">#07110A</color>
+    <color name="hud_panel_900">#0B170E</color>
+    <color name="hud_panel_800">#102014</color>
+    <color name="hud_panel_700">#17301D</color>
+    <color name="hud_line_500">#2B5E38</color>
+    <color name="hud_glow_500">#5DE06D</color>
+    <color name="hud_glow_400">#7AF48A</color>
+    <color name="hud_glow_300">#9BF7A6</color>
+    <color name="hud_glow_200">#CFFFF0</color>
+    <color name="hud_warning_400">#E1B865</color>
+    <color name="hud_alert_400">#E37B4A</color>
+    <color name="hud_lime_300">#B8EB72</color>
+
+    <!-- Legacy aliases kept to avoid touching every layout -->
+    <color name="sand_50">#07110A</color>
+    <color name="sand_100">#102014</color>
+    <color name="sand_300">#2B5E38</color>
+    <color name="clay_500">#5DE06D</color>
+    <color name="clay_700">#82C88A</color>
+    <color name="forest_500">#9BF7A6</color>
+    <color name="danger_500">#E1B865</color>
+    <color name="history_500">#B8EB72</color>
+    <color name="white">#17301D</color>
+    <color name="black">#CFFFF0</color>
+</resources>

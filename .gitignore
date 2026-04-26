@@ -1,0 +1,24 @@
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Gradle / Kotlin
+.gradle/
+.gradle-user-home/
+.kotlin/
+
+# Local machine config
+local.properties
+keystore.properties
+
+# Build outputs
+/build/
+**/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# OS files
+.DS_Store

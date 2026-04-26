@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.JerichoStatus" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/clay_500</item>
+        <item name="colorOnPrimary">@color/hud_bg_950</item>
+        <item name="colorPrimaryContainer">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/black</item>
+        <item name="colorSecondary">@color/forest_500</item>
+        <item name="colorOnSecondary">@color/hud_bg_950</item>
+        <item name="colorTertiary">@color/danger_500</item>
+        <item name="colorOnTertiary">@color/hud_bg_950</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/sand_100</item>
+        <item name="colorOnSurface">@color/black</item>
+        <item name="colorOnSurfaceVariant">@color/clay_700</item>
+        <item name="colorOutline">@color/sand_300</item>
+        <item name="colorError">@color/hud_alert_400</item>
+        <item name="colorOnError">@color/hud_bg_950</item>
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/clay_700</item>
+        <item name="android:textColorHint">@color/clay_700</item>
+        <item name="colorControlNormal">@color/clay_700</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/hud_panel_900</item>
+        <item name="android:navigationBarColor">@color/hud_panel_900</item>
+        <item name="android:windowBackground">@color/sand_50</item>
+    </style>
+</resources>
