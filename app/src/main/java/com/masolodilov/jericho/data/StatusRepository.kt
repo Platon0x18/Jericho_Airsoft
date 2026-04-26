@@ -205,7 +205,12 @@ class StatusRepository(context: Context) {
 
     fun startPreset(preset: StatusPreset): StartResult {
         blockedStartFor(preset)?.let { return it }
-        startTrackedStatus(TrackedStatus.fromPreset(preset))
+        val now = System.currentTimeMillis()
+        spendPositiveActivationItemIfNeeded(
+            preset = preset,
+            happenedAtMillis = now,
+        )?.let { return it }
+        startTrackedStatus(TrackedStatus.fromPreset(preset, now))
         persistAndNotify()
         return StartResult.Started
     }
@@ -597,6 +602,8 @@ class StatusRepository(context: Context) {
             category = preset.category,
         )?.let { return it }
 
+        positiveActivationBlockedFor(preset)?.let { return it }
+
         val activeEffects = activeEffectTags()
         val blockingEffect = preset.blockedBy.firstOrNull { it in activeEffects } ?: return null
         val (badge, reason) = when (blockingEffect) {
@@ -634,6 +641,62 @@ class StatusRepository(context: Context) {
         }
     }
 
+    private fun positiveActivationBlockedFor(preset: StatusPreset): StartResult.Blocked? {
+        if (preset.category != StatusCategory.POSITIVE) return null
+        val requiredCategories = activationCategoriesFor(preset.id)
+        if (requiredCategories.isEmpty()) return null
+        if (activationItemOptionFor(preset) != null) return null
+
+        return StartResult.Blocked(
+            badge = "Нет зелья",
+            reason = "Эффект «${preset.title}» не запущен: в инвентаре нет подходящего зелья или лекарства.",
+        )
+    }
+
+    private fun spendPositiveActivationItemIfNeeded(
+        preset: StatusPreset,
+        happenedAtMillis: Long,
+    ): StartResult.Blocked? {
+        if (preset.category != StatusCategory.POSITIVE) return null
+        val requiredCategories = activationCategoriesFor(preset.id)
+        if (requiredCategories.isEmpty()) return null
+
+        val activationOption = activationItemOptionFor(preset)
+            ?: return StartResult.Blocked(
+                badge = "Нет зелья",
+                reason = "Эффект «${preset.title}» не запущен: в инвентаре нет подходящего зелья или лекарства.",
+            )
+
+        val spent = spendInventoryAmountInternal(
+            itemId = activationOption.inventoryItemId,
+            quantity = 1,
+            happenedAtMillis = happenedAtMillis,
+        )
+        return if (spent == null) {
+            StartResult.Blocked(
+                badge = "Нет зелья",
+                reason = "Эффект «${preset.title}» не запущен: не удалось использовать подходящий предмет.",
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun activationItemOptionFor(preset: StatusPreset): StatusCureOption? {
+        val activationCategories = activationCategoriesFor(preset.id)
+        if (activationCategories.isEmpty()) return null
+
+        return activationCategories.firstNotNullOfOrNull { category ->
+            inventoryItems.firstOrNull { it.category == category && it.quantity > 0 }?.let { item ->
+                StatusCureOption(
+                    inventoryItemId = item.id,
+                    itemTitle = item.title,
+                    itemCategory = item.category,
+                )
+            }
+        }
+    }
+
     private fun cureCategoriesFor(status: TrackedStatus): List<InventoryCategory> {
         return cureCategoriesFor(status.presetId)
     }
@@ -643,6 +706,16 @@ class StatusRepository(context: Context) {
             "gray_rot" -> listOf(InventoryCategory.ANTIBIOTIC, InventoryCategory.GREEN_POTION)
             "death_dance" -> listOf(InventoryCategory.BLUE_POTION)
             "morok" -> listOf(InventoryCategory.PURPLE_POTION)
+            else -> emptyList()
+        }
+    }
+
+    private fun activationCategoriesFor(presetId: String?): List<InventoryCategory> {
+        return when (presetId) {
+            "immune_gray_rot_temp" -> listOf(InventoryCategory.GREEN_POTION)
+            "immune_death_dance_temp" -> listOf(InventoryCategory.BLUE_POTION)
+            "immune_morok_temp" -> listOf(InventoryCategory.PURPLE_POTION)
+            "immune_all_diseases_temp" -> listOf(InventoryCategory.ANTIBIOTIC)
             else -> emptyList()
         }
     }

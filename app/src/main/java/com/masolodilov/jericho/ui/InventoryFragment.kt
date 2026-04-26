@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import com.masolodilov.jericho.R
 import com.masolodilov.jericho.data.StatusRepository
 import com.masolodilov.jericho.databinding.FragmentInventoryBinding
@@ -39,17 +38,7 @@ class InventoryFragment : Fragment(), StatusRepository.Listener, InventoryScreen
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
 
-        adapter = InventoryAdapter(
-            onAcquireOne = { item ->
-                repository.addInventoryAmount(item.id, 1)
-            },
-            onSpendOne = { item ->
-                val success = repository.spendInventoryAmount(item.id, 1)
-                if (!success) {
-                    Snackbar.make(binding.root, R.string.inventory_spend_failed, Snackbar.LENGTH_SHORT).show()
-                }
-            },
-        )
+        adapter = InventoryAdapter()
 
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter

@@ -6,10 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.masolodilov.jericho.databinding.ItemInventoryBinding
 import com.masolodilov.jericho.model.InventoryItem
 
-class InventoryAdapter(
-    private val onAcquireOne: (InventoryItem) -> Unit,
-    private val onSpendOne: (InventoryItem) -> Unit,
-) : RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder>() {
+class InventoryAdapter : RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder>() {
     private val items = mutableListOf<InventoryItem>()
 
     fun submit(inventoryItems: List<InventoryItem>) {
@@ -24,7 +21,7 @@ class InventoryAdapter(
     }
 
     override fun onBindViewHolder(holder: InventoryViewHolder, position: Int) {
-        holder.bind(items[position], onAcquireOne, onSpendOne)
+        holder.bind(items[position])
     }
 
     override fun getItemCount(): Int = items.size
@@ -32,16 +29,10 @@ class InventoryAdapter(
     class InventoryViewHolder(
         private val binding: ItemInventoryBinding,
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(
-            item: InventoryItem,
-            onAcquireOne: (InventoryItem) -> Unit,
-            onSpendOne: (InventoryItem) -> Unit,
-        ) {
+        fun bind(item: InventoryItem) {
             binding.title.text = item.title
             binding.category.text = item.category.title
             binding.quantity.text = item.quantity.toString()
-            binding.addOneButton.setOnClickListener { onAcquireOne(item) }
-            binding.spendOneButton.setOnClickListener { onSpendOne(item) }
         }
     }
 }

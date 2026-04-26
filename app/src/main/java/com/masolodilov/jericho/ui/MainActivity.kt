@@ -15,7 +15,8 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
 
     private lateinit var binding: ActivityMainBinding
     private var currentBottomNavItemId: Int = R.id.menu_presets
-    private var isProfileScreenVisible: Boolean = false
+    private var currentOverlayScreen: Int = OVERLAY_NONE
+    private var helpReturnToProfile: Boolean = false
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
 
         maybeRequestNotificationPermission()
         setupToolbarNavigation()
+        setupToolbarActions()
         setupBackHandling()
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
@@ -40,12 +42,13 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
             binding.bottomNavigation.selectedItemId = R.id.menu_presets
         } else {
             currentBottomNavItemId = savedInstanceState.getInt(KEY_BOTTOM_NAV_ITEM, R.id.menu_presets)
-            isProfileScreenVisible = savedInstanceState.getBoolean(KEY_PROFILE_VISIBLE, false)
+            currentOverlayScreen = savedInstanceState.getInt(KEY_OVERLAY_SCREEN, OVERLAY_NONE)
+            helpReturnToProfile = savedInstanceState.getBoolean(KEY_HELP_RETURN_TO_PROFILE, false)
             binding.bottomNavigation.menu.findItem(currentBottomNavItemId).isChecked = true
-            if (isProfileScreenVisible) {
-                showProfileScreen()
-            } else {
-                showScreen(currentBottomNavItemId)
+            when (currentOverlayScreen) {
+                OVERLAY_PROFILE -> showProfileScreen()
+                OVERLAY_HELP -> showHelpScreen(helpReturnToProfile)
+                else -> showScreen(currentBottomNavItemId)
             }
         }
     }
@@ -53,11 +56,13 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(KEY_BOTTOM_NAV_ITEM, currentBottomNavItemId)
-        outState.putBoolean(KEY_PROFILE_VISIBLE, isProfileScreenVisible)
+        outState.putInt(KEY_OVERLAY_SCREEN, currentOverlayScreen)
+        outState.putBoolean(KEY_HELP_RETURN_TO_PROFILE, helpReturnToProfile)
     }
 
     private fun showScreen(itemId: Int) {
-        isProfileScreenVisible = false
+        currentOverlayScreen = OVERLAY_NONE
+        helpReturnToProfile = false
         val fragment = when (itemId) {
             R.id.menu_active -> ActiveStatusesFragment()
             R.id.menu_history -> HistoryFragment()
@@ -75,13 +80,25 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
     }
 
     private fun showProfileScreen() {
-        isProfileScreenVisible = true
+        currentOverlayScreen = OVERLAY_PROFILE
+        helpReturnToProfile = false
         val fragment = PlayerProfileFragment()
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.fragment_container, fragment, fragment::class.java.simpleName)
             .commit()
         updateToolbar(PROFILE_SCREEN_ID)
+    }
+
+    private fun showHelpScreen(returnToProfile: Boolean = currentOverlayScreen == OVERLAY_PROFILE) {
+        currentOverlayScreen = OVERLAY_HELP
+        helpReturnToProfile = returnToProfile
+        val fragment = HelpFragment()
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, fragment, fragment::class.java.simpleName)
+            .commit()
+        updateToolbar(HELP_SCREEN_ID)
     }
 
     private fun updateToolbar(itemId: Int) {
@@ -92,9 +109,11 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
                 R.id.menu_permanent -> getString(R.string.screen_permanent)
                 R.id.menu_inventory -> getString(R.string.screen_inventory)
                 PROFILE_SCREEN_ID -> getString(R.string.screen_profile)
+                HELP_SCREEN_ID -> getString(R.string.screen_help)
                 else -> getString(R.string.screen_presets)
             }
         updateToolbarNavigationIcon()
+        updateToolbarActionsState()
     }
 
     private fun maybeRequestNotificationPermission() {
@@ -105,13 +124,27 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
 
     private fun setupToolbarNavigation() {
         binding.toolbar.setNavigationOnClickListener {
-            if (isProfileScreenVisible) {
-                showScreen(currentBottomNavItemId)
-            } else {
-                showProfileScreen()
+            when (currentOverlayScreen) {
+                OVERLAY_HELP -> closeHelpScreen()
+                OVERLAY_PROFILE -> showScreen(currentBottomNavItemId)
+                else -> showProfileScreen()
             }
         }
         updateToolbarNavigationIcon()
+    }
+
+    private fun setupToolbarActions() {
+        binding.toolbar.inflateMenu(R.menu.main_toolbar_menu)
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_help -> {
+                    showHelpScreen()
+                    true
+                }
+                else -> false
+            }
+        }
+        updateToolbarActionsState()
     }
 
     private fun setupBackHandling() {
@@ -119,11 +152,13 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (isProfileScreenVisible) {
-                        showScreen(currentBottomNavItemId)
-                    } else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
+                    when (currentOverlayScreen) {
+                        OVERLAY_HELP -> closeHelpScreen()
+                        OVERLAY_PROFILE -> showScreen(currentBottomNavItemId)
+                        else -> {
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                        }
                     }
                 }
             },
@@ -131,18 +166,35 @@ class MainActivity : AppCompatActivity(), TrackerProvider {
     }
 
     private fun updateToolbarNavigationIcon() {
-        if (isProfileScreenVisible) {
-            binding.toolbar.navigationIcon = AppCompatResources.getDrawable(this, android.R.drawable.ic_media_previous)
-            binding.toolbar.navigationContentDescription = getString(R.string.content_description_close_profile)
-        } else {
+        if (currentOverlayScreen == OVERLAY_NONE) {
             binding.toolbar.navigationIcon = AppCompatResources.getDrawable(this, android.R.drawable.ic_menu_myplaces)
             binding.toolbar.navigationContentDescription = getString(R.string.content_description_open_profile)
+        } else {
+            binding.toolbar.navigationIcon = AppCompatResources.getDrawable(this, android.R.drawable.ic_media_previous)
+            binding.toolbar.navigationContentDescription = getString(R.string.content_description_navigate_back)
+        }
+    }
+
+    private fun updateToolbarActionsState() {
+        binding.toolbar.menu.findItem(R.id.action_help)?.isVisible = currentOverlayScreen != OVERLAY_HELP
+    }
+
+    private fun closeHelpScreen() {
+        if (helpReturnToProfile) {
+            showProfileScreen()
+        } else {
+            showScreen(currentBottomNavItemId)
         }
     }
 
     private companion object {
         const val PROFILE_SCREEN_ID = -1
+        const val HELP_SCREEN_ID = -2
+        const val OVERLAY_NONE = 0
+        const val OVERLAY_PROFILE = 1
+        const val OVERLAY_HELP = 2
         const val KEY_BOTTOM_NAV_ITEM = "bottom_nav_item"
-        const val KEY_PROFILE_VISIBLE = "profile_visible"
+        const val KEY_OVERLAY_SCREEN = "overlay_screen"
+        const val KEY_HELP_RETURN_TO_PROFILE = "help_return_to_profile"
     }
 }

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -49,7 +50,9 @@ class InventoryTransferFragment : Fragment(), StatusRepository.Listener {
         }
         binding.itemInput.setOnItemClickListener { _, _, position, _ ->
             selectedItemId = availableItems.getOrNull(position)?.id
+            hideTransferResult()
         }
+        binding.quantityInput.doAfterTextChanged { hideTransferResult() }
     }
 
     override fun onStart() {
@@ -74,6 +77,9 @@ class InventoryTransferFragment : Fragment(), StatusRepository.Listener {
 
         binding.emptyView.visibility = if (availableItems.isEmpty()) View.VISIBLE else View.GONE
         binding.formContainer.visibility = if (availableItems.isEmpty()) View.GONE else View.VISIBLE
+        if (availableItems.isEmpty()) {
+            hideTransferResult()
+        }
 
         binding.itemInput.setSimpleItems(availableItems.map { it.dropdownLabel() }.toTypedArray())
 
@@ -117,6 +123,11 @@ class InventoryTransferFragment : Fragment(), StatusRepository.Listener {
                 Snackbar.make(binding.root, result.message, Snackbar.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun hideTransferResult() {
+        if (_binding == null) return
+        binding.qrResultCard.visibility = View.GONE
     }
 
     private fun selectedInventoryItem(): InventoryItem? {
